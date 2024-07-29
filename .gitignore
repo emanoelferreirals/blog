@@ -1,0 +1,21 @@
+# Ignorar todos os arquivos dentro de public/users
+public/users/*
+
+# Exceto o arquivo .gitkeep
+!public/users/.gitkeep
+
+# Ignorar todas as subpastas dentro de public/users
+public/users/*/
+
+# Ignorar todas as fotos de perfil dentro de public/users
+public/users/**/*.jpg
+public/users/**/*.png
+
+# Ignorar todos os arquivos dentro de public/uploads
+public/uploads/*
+
+# Exceto o arquivo .gitkeep em public/uploads
+!public/uploads/.gitkeep
+
+
+
