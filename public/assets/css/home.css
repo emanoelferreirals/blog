@@ -1,0 +1,144 @@
+@charset "UTF-8";
+
+:root{
+    --azul_escuro: #1C0051;
+    --azul_claro: rgb(5, 5, 228);
+    --lilás: #3F00B7;
+    --branco: #F2FAFC;
+    --branco_azul: #D7F8F9;
+    --cinza_escuro: #505050;
+    --cinza: #d4d4d4c9;
+    --escuro: #242424;
+}
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--branco_azul);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.container{
+    min-height: 82vh;
+}
+
+h1#titulos{
+    font-size: 1.7em;
+    margin: 10px;
+}
+
+section#destaques{
+    width: 95%;
+    height: 150px;
+    display: block;
+    margin: auto;
+    margin-top: 8px;
+    margin-bottom: 20px;
+    background-color: var(--branco);
+    box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.055);
+}
+
+
+section#feed{
+    width: 90%;
+    display: block;
+    margin: auto;    
+    margin-bottom: 30px;
+    box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.055);
+}
+
+.publi{
+    width: 100%;
+    padding: 15px;
+    border-radius: 0px 10px;
+    margin-bottom: 20px;
+    background-color: var(--branco);
+}   
+
+.publi > p{
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Quantidade de linhas*/    
+    -webkit-box-orient: vertical;
+    margin-top: 10px;
+    background-color: transparent;
+}
+
+.data-publi{
+    font-size: .7em;
+    color: var(--cinza);
+}
+
+.publi a.ver-mais{
+    font-size: .8em;
+    color: var(--lilás);
+    margin: 5px 0px;
+}
+
+.publi a.ver-mais:hover{
+    cursor: pointer;
+    color: var(--azul_escuro);
+}
+
+.pagination{
+    width: 200px;
+    overflow: scroll;
+    padding: 5px 0px;
+    margin: auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    background-color: var(--branco);
+}
+
+.button-pagination{
+    padding: 5px 10px;
+    border-right: 1px solid var(--cinza_escuro);
+}
+
+.button-pagination:last-child{
+    border: none;
+}
+
+footer{
+    width: 100%;
+    height: 50px;
+    text-align: center;
+    color: var(--branco);
+    background-image: linear-gradient(to bottom, var(--lilás), var(--azul_escuro) 70%);
+}
+
+#sppiner{
+    width: 25px;
+    display: block;
+    margin: auto;
+    opacity: 0;
+    margin-bottom: 30px;
+}
+
+#mais-com{
+    background-color: transparent;
+    text-decoration: underline;
+    border: none;
+    padding: 5px;
+    display: block;
+    margin: auto;
+    margin-bottom: 50px;
+}
+
+
+@media screen and (orientation: landscape) and (min-width: 800px) {
+    .container{
+        width: 800px;
+        margin: auto;
+        
+    }
+}
