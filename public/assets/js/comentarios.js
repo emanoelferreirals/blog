@@ -52,43 +52,57 @@ function desativarConfirmExcluir(){
     document.body.classList.remove('modal-open')
 }
 
-$(document).ready(function() {
-    $('#form-coment').submit(function(event) {
-        event.preventDefault(); // Impede o envio do formulário tradicional
+const formComent = document.querySelector('#form-coment');  
 
-        var formData = $(this).serialize(); // Serializa os dados do formulário
-     // console.log(formData)
+formComent.addEventListener('submit', function (event) {
 
-        $.ajax({
-            type: 'POST',
-            url: '../acoes.php',
-            data: formData,
-            success: function(response) {
-                // Verifica se a resposta é um JSON válido
-                try {
-                    var jsonResponse = JSON.parse(response);
-                    
-                    if (jsonResponse.success) {
-                        // Atualiza a lista de comentários
-                        $('#num-com').html(Number($('#num-com').html()) + 1);
-                        
-                        $('#comentario').val(''); // Limpa o campo de comentário
-                        window.location.href = '../publicacao/?id='+idPubli;
-                    } else  if(jsonResponse.action == 'login'){
-                        window.location.href = '../login/?redirect=publicacao?id='+idPubli
-                    }
-                } catch (e) {
-                 // console.error("Erro ao analisar a resposta JSON:", e);
-                    alert("Erro ao enviar o comentário.");
-                }
-            },
-            error: function() {
-                alert('Erro ao enviar o comentário.');
-            }
-        });
-    });
-});
+    event.preventDefault(); // Impede o envio do formulário tradicional
 
+    var formData = serialize(formComent)
+
+    $.ajax({
+
+        type: 'POST',
+
+        url: '../acoes.php',
+
+        data: formData
+
+    }).done(function (response) {
+
+        // Verifica se a resposta é um JSON válido
+
+        try {
+
+            var jsonResponse = JSON.parse(response);
+
+            if (jsonResponse.success) {
+
+                // Atualiza a lista de comentários
+
+                $('#num-com').html(Number($('#num-com').html()) + 1);
+
+                $('#comentario').val(''); // Limpa o campo de comentário
+
+                window.location.href = '../publicacao/?id='+idPubli;
+
+            } else  if(jsonResponse.action == 'login'){
+
+                window.location.href = '../login/?redirect=publicacao?id='+idPubli
+
+            }
+
+        } catch (e) {
+
+         // console.error("Erro ao analisar a resposta JSON:", e);
+
+            alert("Erro ao enviar o comentário.");
+
+        }
+
+    })
+
+})
 
 function loadCometarios(page,max_com) {
     $.ajax({
