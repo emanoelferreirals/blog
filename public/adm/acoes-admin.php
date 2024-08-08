@@ -31,11 +31,12 @@ function publicar(){
             $descricao = $_POST['descricao'];
             $data = date("Y-m-d H:i:s");
 
-            $query = "INSERT INTO publicacoes (titulo,descricao,conteudo,data_publicacao) VALUES ('$titulo','$descricao','$conteudo','$data');";
+            $query = "INSERT INTO publicacoes (titulo,descricao,conteudo,data_publicacao) VALUES (? , ?, ? , ?);";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('sssd',$titulo,$conteudo,$descricao,$data);
 
-            echo $query;
-
-            $result = mysqli_query($conn,$query);
+            
+            $result = $stmt->execute();
 
             if($result) {
                 echo "Cadastrado";
@@ -64,17 +65,18 @@ function editar(){
             $data = date("Y-m-d H:i:s");
             $id_edit = $_POST['id_edit'];
 
-            $query = "UPDATE publicacoes SET titulo='$titulo',conteudo='$conteudo',data_publicacao='$data' WHERE id_publi=$id_edit;";
+            $query = "UPDATE publicacoes SET titulo= ?,descricao= ?,conteudo= ?,data_publicacao= ? WHERE id_publi= ? ;";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('sssdi',$titulo,$conteudo, $descricao,$data, $id_edit);
+            $stmt->execute();
 
-            $result = mysqli_query($conn,$query);
+            $result = $stmt->get_result();
 
-            if($result) {
+            if($result) {   
                 echo "Editado";
             } else {
                 echo "Erro ao editar";
             }
-
-
         }
 }
 
@@ -119,15 +121,15 @@ function uploadFile(){
                 }else {
                     echo 'Erro ao mover o arquivo para o diretório de destino.';
                 }     
-            }else {
+            }else{
                 echo 'Apenas arquivos JPG, JPEG e PNG são permitidos.';
             }
-        }else {
+        }else{
             echo 'O tamanho do arquivo é muito grande. O tamanho máximo permitido é de 10MB.';
         }
 
            
-    }else {
+    }else{
         echo 'Nenhum arquivo selecionado';
     }
 }
