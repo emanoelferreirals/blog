@@ -1,109 +1,79 @@
-const listCom = document.querySelector('.list-comentario')
+/**
+ * Código do comentários.js reestruturado
+ * Modularizando o código
+ * 
+ */
+let pagination = 1;
+let exstComentario = false;
 
-const btnExcluir = document.querySelectorAll('.btn-excluir-com')
-const btnOpenComentarios = document.querySelector('#open-comentarios')
-const comentariosArea = document.querySelector('.comentarios-area')
-const btnComentar = document.querySelector('.btn-comentar')
-const com = document.querySelector('.comentario')
+document.addEventListener('DOMContentLoaded', loadCometarios(pagination, 10));
 
-const listComentarios = document.querySelector('#list-comentario');
-const btnMaisCom = document.querySelector('#mais-com');
-const sppinerLoad = document.querySelector('#sppiner')
+const elements = {
+    listCom: document.querySelector('.list-comentario'),
+    btnOpenComentarios: document.querySelector('#open-comentarios'),
+    comentariosArea: document.querySelector('.comentarios-area'),
+    btnComentar: document.querySelector('.btn-comentar'),
+    com: document.querySelector('.comentario'),
+    listComentarios: document.querySelector('#list-comentario'),
+    btnMaisCom: document.querySelector('#mais-com'),
+    sppinerLoad: document.querySelector('#sppiner'),
+    btnConfirmeExcluir: document.querySelector('#btn-confirme-excluir'),
+    btnCancelar: document.querySelector('#btn-cancelar'),
+    backgroundTela: document.querySelector('.background-tela-confirme'),
+    formComent: document.querySelector('#form-coment')
+};
 
+elements.btnMaisCom.addEventListener('click', function () {
+    elements.btnMaisCom.style.display = 'none';
+    elements.sppinerLoad.style.display = 'block';
 
-const btnConfirmeExcluir = document.querySelector('#btn-confirme-excluir')
-const btnCancelar = document.querySelector('#btn-cancelar')
-const backgroundTela = document.querySelector('.background-tela-confirme')
-    
+    loadCometarios(pagination, 10);
+});
 
-var pagination = 1
-var exstComentario = false
+elements.btnOpenComentarios.addEventListener('click', toggleComentarios);
 
-document.addEventListener('DOMContentLoaded', loadCometarios(pagination,10))
+elements.formComent.addEventListener('submit', function (event) {
+    addComentario(event);
+});
 
-    btnMaisCom.addEventListener('click', function () {
-        btnMaisCom.style.display = 'none';
-        sppinerLoad.style.display = 'block'
-        
-        loadCometarios(pagination, 10)
-    })
+/* ----FUNÇÕES DE REQUISIÇÕES COM SERVIDOR E MANIPULAÇÕ DOS DADOS ------*/ 
 
-btnOpenComentarios.addEventListener('click',()=>{
-    if(comentariosArea.style.display == 'block'){
-        comentariosArea.style.display = 'none';
-        btnOpenComentarios.style.backgroundColor = 'transparent';
-    } else {
-        comentariosArea.style.display = 'block';
-        btnOpenComentarios.style.backgroundColor = '#e9e9e9c9';
-    }
-})
+function addComentario(event) {
+    event.preventDefault(); // Impede o envio do formulário tradicional
 
-index_com = 0
+    var formData = serialize(elements.formComent);
 
+    $.ajax({
+        type: 'POST',
+        url: '../acoes.php',
+        data: formData
+    }).done(function (response) {
 
-    
-function ativarConfirmExcluir(){
-    backgroundTela.style.display = 'flex';
-    document.body.classList.add('modal-open')
+        // Verifica se a resposta é um JSON válido
+        try {
+            var jsonResponse = JSON.parse(response);
+            if (jsonResponse.success) {
+
+                // Atualiza a lista de comentários
+                var numComElement = document.getElementById('num-com');
+                numComElement.innerHTML = Number(numComElement.innerHTML) + 1;
+
+                document.getElementById('comentario').value = ''; // Limpa o campo de comentário
+                window.location.href = '../publicacao/?id=' + idPubli;
+
+            } else if (jsonResponse.action == 'login') {
+                window.location.href = '../login/?redirect=publicacao?id=' + idPubli;
+            }
+        } catch (e) {
+            console.error("Erro ao analisar a resposta JSON:", e);
+            alert("Erro ao enviar o comentário.");
+        }
+    });
 }
 
-function desativarConfirmExcluir(){
-    backgroundTela.style.display = 'none';
-    document.body.classList.remove('modal-open')
-}
-
-const formComent = document.querySelector('#form-coment');  
-
-formComent.addEventListener('submit', function (event) {
-
-    event.preventDefault(); // Impede o envio do formulário tradicional
-
-    var formData = serialize(formComent)
-
-    $.ajax({
-
-        type: 'POST',
-
-        url: '../acoes.php',
-
-        data: formData
-
-    }).done(function (response) {
-
-        // Verifica se a resposta é um JSON válido
-
-        try {
-
-            var jsonResponse = JSON.parse(response);
-
-            if (jsonResponse.success) {
-
-                // Atualiza a lista de comentários
-
-                $('#num-com').html(Number($('#num-com').html()) + 1);
-
-                $('#comentario').val(''); // Limpa o campo de comentário
-
-                window.location.href = '../publicacao/?id='+idPubli;
-
-            } else  if(jsonResponse.action == 'login'){
-
-                window.location.href = '../login/?redirect=publicacao?id='+idPubli
-
-            }
-
-        } catch (e) {
-
-         // console.error("Erro ao analisar a resposta JSON:", e);
-
-            alert("Erro ao enviar o comentário.");
-
-        }
-
-    })
-
-})
-
+/**
+ * FUNÇÃO DE CARREGAMENTO DE PREPARAÇÃO DOS COMENTÁRIOS
+ */
 function loadCometarios(page,max_com) {
     $.ajax({
         url: '../getComentarios.php',
@@ -116,10 +86,9 @@ function loadCometarios(page,max_com) {
         }
     }).done(function (response) {
         try {
-         // console.log(response)
 
             if (response.status === 'sucess') {
-                let i = 0
+                let i = 0;
 
                 while (i < max_com) {
                     const dados = response.dados[i];
@@ -134,34 +103,32 @@ function loadCometarios(page,max_com) {
                        dados.tempo_publi,
                        dados.texto,
                        dados.com_usuario_log,
-                    )
+                    );
 
-                    const comentario = document.createElement('div')
-                    comentario.classList.add('comentario')
-                    comentario.innerHTML = newCom
-
-                 // console.log(dados.com_usuario_log)
+                    const comentario = document.createElement('div');
+                    comentario.classList.add('comentario');
+                    comentario.innerHTML = newCom;
 
                     if (dados.com_usuario_log) {
-                        const formExcluirCom = document.createElement('form')
-                        formExcluirCom.classList.add('form-excluir-com')
+                        const formExcluirCom = document.createElement('form');
+                        formExcluirCom.classList.add('form-excluir-com');
                         formExcluirCom.innerHTML = `
                                 <input type="hidden" name="operacao" value="delete-comentario">
                                 <input type="hidden" name="redirecionamento" value="${dados.id_publi}">
                                 <input type="hidden" name="id-comentario" value="${dados.id_comentario}">
-                            `
-                        const btnExcluir = document.createElement('button')
-                        btnExcluir.classList.add('btn-excluir-com', 'button')
-                        btnExcluir.type = 'button'
-                        btnExcluir.innerText = 'Excluir'
+                            `;
+                        const btnExcluir = document.createElement('button');
+                        btnExcluir.classList.add('btn-excluir-com', 'button');
+                        btnExcluir.type = 'button';
+                        btnExcluir.innerText = 'Excluir';
 
-                        formExcluirCom.appendChild(btnExcluir)
+                        formExcluirCom.appendChild(btnExcluir);
 
                         btnExcluir.addEventListener('click', () => { 
                             ativarConfirmExcluir();
 
-                            btnConfirmeExcluir.addEventListener('click', function () {                
-                                var data = serialize(formExcluirCom)
+                            elements.btnConfirmeExcluir.addEventListener('click', function () {                
+                                var data = serialize(formExcluirCom);
                 
                                 $.ajax({
                                     url: '../acoes.php',
@@ -171,72 +138,55 @@ function loadCometarios(page,max_com) {
                                     var jsonResponse = JSON.parse(response);
                 
                                     if (jsonResponse.sucess) {
-                                     // console.log(comentario)
-                                        document.querySelector('#num-com').innerHTML = Number(document.querySelector('#num-com').innerHTML) - 1
-                                        comentario.style.display = 'none'
-                                        //https://developer.mozilla.org/en-US/docs/Web/API/Node/removeChild
-                                        // https://scancode.com.br/como-remover-elementos-html-com-javascript/
-
-
-                                         // Remover o evento para evitar múltiplos anexos
-                                         // btnConfirmeExcluir.removeEventListener('click', handleConfirmClick);
-                                          desativarConfirmExcluir();
+                                        document.querySelector('#num-com').innerHTML = Number(document.querySelector('#num-com').innerHTML) - 1;
+                                        comentario.style.display = 'none';
+                                        desativarConfirmExcluir();
                                     } else {
-                                        alert(jsonResponse.dados)
+                                        alert(jsonResponse.dados);
                                     }
-                                })
-                            })
+                                });
+                            });
                             
-                            btnCancelar.addEventListener('click', ativarConfirmExcluir)
-                            backgroundTela.addEventListener('click', desativarConfirmExcluir)
-                        })
-                     // console.log(formExcluirCom)
+                            elements.btnCancelar.addEventListener('click', ativarConfirmExcluir);
+                            elements.backgroundTela.addEventListener('click', desativarConfirmExcluir);
+                        });
                         
-                        // Encontrar a div 'insights-com' dentro do novo elemento 'comentario'
                         const insightsCom = comentario.querySelector('.insights-com');
                         if (insightsCom) {
                             insightsCom.appendChild(formExcluirCom);
                         } else {
-                            // Se não encontrar 'insights-com', adicionar diretamente ao comentário
                             comentario.appendChild(formExcluirCom);
                         }
                     }
 
-
-                    //console.log(newCom)
-                    listComentarios.appendChild(comentario)
+                    elements.listComentarios.appendChild(comentario);
                     i++;
                 }
 
-                btnMaisCom.style.display = 'block'
-                sppinerLoad.style.display = 'none'
+                elements.btnMaisCom.style.display = 'block';
+                elements.sppinerLoad.style.display = 'none';
 
-                pagination++
-                exstComentario = true
+                pagination++;
+                exstComentario = true;
 
             } else if (response.status === 'vazio') { 
-                btnMaisCom.style.display = 'none'
-                sppinerLoad.style.display = 'none'
-
-                //console.log(response.status + "   "+ exstComentario)
+                elements.btnMaisCom.style.display = 'none';
+                elements.sppinerLoad.style.display = 'none';
                 
                 if (!exstComentario) {
-                 // console.log("porque não funciona??")
-                    listComentarios.innerHTML = `<p style="text-align:center;font-size:1.2em" class="texto">${response.dados}</p>  <p style="text-align:center; font-size: 1em"> (Seja o primeiro a comentar)</p>`;
-                    listComentarios.style.paddingBottom = '50px';
+                    elements.listComentarios.innerHTML = `<p style="text-align:center;font-size:1.2em" class="texto">${response.dados}</p>  <p style="text-align:center; font-size: 1em"> (Seja o primeiro a comentar)</p>`;
+                    elements.listComentarios.style.paddingBottom = '50px';
                 }
             } else {
-             // console.log(response.status)
+                console.log(`STATUS: ${response.status}; => ${response.dados}`);
             }
             
         } catch (e) {
-            btnMaisCom.style.display = 'none'
-            sppinerLoad.style.display = 'none'
-            
-            //console.error('Failed to parse JSON response:', response);
+            elements.btnMaisCom.style.display = 'none';
+            elements.sppinerLoad.style.display = 'none';            
         }
     }).fail(function (jqXHR, textStatus, errorThrown) {
-     // console.error('Error: ' + textStatus, errorThrown);
+        console.error('Error: ' + textStatus, errorThrown);
     });
 }
 
@@ -262,10 +212,36 @@ function templateCom(id_comentario,id_publi,id_usuario,foto_perfil,nome,email,te
         <div class="insights-com">
         <p>🤍 0</p>
         <p>🗨️ 0</p>
-        `
-    return comFormatado
+        `;
+    return comFormatado;
 }
 
-//serializar dados sem ajax OBS: não entendo este código. Fonte: https://pt.stackoverflow.com/questions/287393/serialize-com-javascript-puro
+
+/* ----------------------FUNÇÕES DE LAYOUT ---------------------------*/
+
+function toggleComentarios() {
+    if (elements.comentariosArea.style.display == 'block') {
+        elements.comentariosArea.style.display = 'none';
+        elements.btnOpenComentarios.style.backgroundColor = 'transparent';
+    } else {
+        elements.comentariosArea.style.display = 'block';
+        elements.btnOpenComentarios.style.backgroundColor = '#e9e9e9c9';
+    }
+}
+
+function ativarConfirmExcluir() {
+    elements.backgroundTela.style.display = 'flex';
+    document.body.classList.add('modal-open');
+}
+
+function desativarConfirmExcluir() {
+    elements.backgroundTela.style.display = 'none';
+    document.body.classList.remove('modal-open');
+}
+
+/* --------------------------------------------------------------------- */
+
+
+//serializar dados sem ajax. Fonte: https://pt.stackoverflow.com/questions/287393/serialize-com-javascript-puro
 
 function serialize(form){if(!form||form.nodeName!=="FORM"){return }var i,j,q=[];for(i=form.elements.length-1;i>=0;i=i-1){if(form.elements[i].name===""){continue}switch(form.elements[i].nodeName){case"INPUT":switch(form.elements[i].type){case"text":case"hidden":case"password":case"button":case"reset":case"submit":q.push(form.elements[i].name+"="+encodeURIComponent(form.elements[i].value));break;case"checkbox":case"radio":if(form.elements[i].checked){q.push(form.elements[i].name+"="+encodeURIComponent(form.elements[i].value))}break;case"file":break}break;case"TEXTAREA":q.push(form.elements[i].name+"="+encodeURIComponent(form.elements[i].value));break;case"SELECT":switch(form.elements[i].type){case"select-one":q.push(form.elements[i].name+"="+encodeURIComponent(form.elements[i].value));break;case"select-multiple":for(j=form.elements[i].options.length-1;j>=0;j=j-1){if(form.elements[i].options[j].selected){q.push(form.elements[i].name+"="+encodeURIComponent(form.elements[i].options[j].value))}}break}break;case"BUTTON":switch(form.elements[i].type){case"reset":case"submit":case"button":q.push(form.elements[i].name+"="+encodeURIComponent(form.elements[i].value));break}break}}return q.join("&")};
