@@ -42,16 +42,19 @@ function addComentario(event) {
     event.preventDefault(); // Impede o envio do formulário tradicional
 
     var formData = serialize(elements.formComent);
+    console.log(formData)
 
     $.ajax({
         type: 'POST',
         url: '../acoes.php',
-        data: formData
+        data: formData  
     }).done(function (response) {
-
+        console.log(response.dados)
         // Verifica se a resposta é um JSON válido
         try {
             var jsonResponse = JSON.parse(response);
+            console.log(jsonResponse)
+
             if (jsonResponse.success) {
 
                 // Atualiza a lista de comentários
@@ -59,10 +62,12 @@ function addComentario(event) {
                 numComElement.innerHTML = Number(numComElement.innerHTML) + 1;
 
                 document.getElementById('comentario').value = ''; // Limpa o campo de comentário
-                window.location.href = '../publicacao/?id=' + idPubli;
+                // window.location.href = '../publicacao/?id=' + idPubli;
 
             } else if (jsonResponse.action == 'login') {
                 window.location.href = '../login/?redirect=publicacao?id=' + idPubli;
+            } else{
+                console.log(jsonResponse.error)
             }
         } catch (e) {
             console.error("Erro ao analisar a resposta JSON:", e);
@@ -94,15 +99,11 @@ function loadCometarios(page,max_com) {
                     const dados = response.dados[i];
                     
                     var newCom = templateCom(
-                       dados.id_comentario,
-                       dados.id_publi,
-                       dados.id_usuario,
                        dados.foto_perfil,
                        dados.nome,
                        dados.email,
                        dados.tempo_publi,
-                       dados.texto,
-                       dados.com_usuario_log,
+                       dados.texto
                     );
 
                     const comentario = document.createElement('div');
@@ -191,7 +192,7 @@ function loadCometarios(page,max_com) {
 }
 
 
-function templateCom(id_comentario,id_publi,id_usuario,foto_perfil,nome,email,tempo_publi,texto,com_usuario_log) {
+function templateCom(foto_perfil,nome,email,tempo_publi,texto) {
     comFormatado = `
     <div class="usuario-com">
             <div class="foto-perfil" style="background-image: url(${foto_perfil})"></div>

@@ -1,15 +1,6 @@
-/*
-$(document).ready(function () {
-    $('#like').click(function () {
-        
-    })
-})
-*/
 const btnLike = document.querySelector('#like')
 
 document.querySelector('#like').addEventListener('click', function () {
-    
-    
     if (btnLike.innerHTML.includes('❤️')) {
         var likeStatus = true
     } else {
