@@ -31,11 +31,19 @@
             
             $offset = ($page * $max_com) - $max_com;
 
-            $query = "SELECT * FROM publicacoes ORDER BY data_publicacaO DESC LIMIT ? OFFSET ?;";
+            $query = "SELECT * FROM publicacoes ORDER BY data_publicacao DESC LIMIT ? OFFSET ?;";
             $stmt = $conn->prepare($query);
             $stmt->bind_param('ii',$max_com, $offset);
             $stmt->execute();
-            $result = $stmt->get_result();
+            $result = $stmt->get_result();  
+
+
+            //contando número de publicações
+            $result_num_publi = mysqli_query($conn,'SELECT * FROM publicacoes');
+            $num_publi = mysqli_num_rows($result_num_publi);
+
+            //Definindo número de pages
+            $num_pages = round($num_publi/$max_com);
 
             $i = 0;
 
@@ -58,7 +66,7 @@
                     $i++;
                 }
 
-                echo json_encode(array('sucess' => true,'num_rows' => $result->num_rows ,'dados' => $dados));
+                echo json_encode(array('sucess' => true,'total_posts' => $num_publi,'num_pages' => $num_pages ,'dados' => $dados));
             }else{
                 echo json_encode(array('sucess' => false, 'dados'=> 'vazio'));
             }
@@ -69,51 +77,50 @@
 
     function login() {
         global $conn;
-
+    
         $_SESSION['login-admin'] = false;
     
-        if(isset($_POST['email-login']) &&
-        isset($_POST['senha-login']) && 
-
-        !empty($_POST['email-login']) && 
-        !empty($_POST['senha-login'])) {
+        if (isset($_POST['email-login']) && isset($_POST['senha-login']) &&
+            !empty($_POST['email-login']) && !empty($_POST['senha-login'])) {
     
             $email = $_POST['email-login'];
             $senha = $_POST['senha-login'];
-
-            $query_login_admin = "SELECT * FROM usuario_admin WHERE email='$email';";
-            $result_login_admin = mysqli_query($conn,$query_login_admin);
-
-            if($result_login_admin && mysqli_num_rows($result_login_admin)>0){
-                $result_dados_admin = mysqli_fetch_assoc($result_login_admin);
-
-                if($senha == $result_dados_admin['senha'] ){
+    
+            $query_login_admin = "SELECT * FROM usuario_admin WHERE email = ?";
+            $stmt = $conn->prepare($query_login_admin);
+            $stmt->bind_param('s', $email);
+            $stmt->execute();
+            $result_login_admin = $stmt->get_result();
+    
+            if ($result_login_admin && $result_login_admin->num_rows > 0) {
+                $result_dados_admin = $result_login_admin->fetch_assoc();
+    
+                if ($senha == $result_dados_admin['senha']) {
                     $_SESSION['login-admin'] = true;
                     header("Location: home/");
-                }else{
+                } else {
                     $_SESSION['login-admin'] = false;
                     echo "Senha e/ou email errado(s)";
                 }
-            }else{
-                $query_login = "SELECT * FROM usuario WHERE email='$email';";
-        
-                $result_login = mysqli_query($conn, $query_login);
-                
-                if($result_login && mysqli_num_rows($result_login) > 0) {
-
-                    $dadosUsuario = mysqli_fetch_assoc($result_login);
-
+            } else {
+                $query_login = "SELECT * FROM usuario WHERE email = ?";
+                $stmt = $conn->prepare($query_login);
+                $stmt->bind_param('s', $email);
+                $stmt->execute();
+                $result_login = $stmt->get_result();
+    
+                if ($result_login && $result_login->num_rows > 0) {
+                    $dadosUsuario = $result_login->fetch_assoc();
                     $senhaDoBanco = $dadosUsuario['senha'];
-                    $emailDoBanco = $dadosUsuario['email'];
-                
-                    if($emailDoBanco == $email && password_verify($senha,$senhaDoBanco)) {
+    
+                    if (password_verify($senha, $senhaDoBanco)) {
                         $_SESSION['login'] = true;
                         $_SESSION['usuario_id'] = $dadosUsuario['id_usuario'];
-
-                        if(isset($_POST['redirect']) && !empty($_POST['redirect'])){
-                            header("Location: ".$_POST['redirect']);
+    
+                        if (isset($_POST['redirect']) && !empty($_POST['redirect'])) {
+                            header("Location: " . $_POST['redirect']);
                             exit;
-                        }else{
+                        } else {
                             header("Location: home/");
                             exit;
                         }
@@ -122,94 +129,73 @@
                         header("Location: login/?error=4");
                         exit;
                     }
-                }else{
-                    //erro 5
+                } else {
                     echo "Você ainda não tem uma conta";
                 }
             }
         }
     }
-    
 
 
-    function cadastro(){
+    function cadastro() {
         global $conn;
     
-        if(isset($_POST['user-cadastro']) && 
-        isset($_POST['email-cadastro']) && 
-        isset($_POST['senha-cadastro']) && 
-        isset($_POST['confirme-senha']) &&
-
-        !empty($_POST['user-cadastro']) && 
-        !empty($_POST['email-cadastro']) && 
-        !empty($_POST['senha-cadastro']) && 
-        !empty($_POST['confirme-senha'])){
-
+        if (isset($_POST['user-cadastro']) && isset($_POST['email-cadastro']) &&
+            isset($_POST['senha-cadastro']) && isset($_POST['confirme-senha']) &&
+            !empty($_POST['user-cadastro']) && !empty($_POST['email-cadastro']) &&
+            !empty($_POST['senha-cadastro']) && !empty($_POST['confirme-senha'])) {
+    
             $user = $_POST['user-cadastro'];
             $email = $_POST['email-cadastro'];
             $senha = $_POST['senha-cadastro'];
             $confirmeSenha = $_POST['confirme-senha'];
     
-            if(strcmp($senha,$confirmeSenha)==0){
-
-                $query_consult = "SELECT * FROM usuario WHERE email='$email';";
-
-                $result_consult = mysqli_query($conn,$query_consult);
-
-                if($result_consult && mysqli_num_rows($result_consult) > 0){
-                     $email_disponivel = false;
-                }else{
-                    $email_disponivel = true;
-                }
-
-                /*while($dados_consult=mysqli_fetch_assoc($result_consult)){
-                    $email_disponivel = $dados_consult['email']==$email?false:true;
-                    if($email_disponivel==false)
-                        break;
-                }*/
-
-                if($email_disponivel){
-                        $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
-
-                        $query = "INSERT INTO usuario (id_usuario,nome,email,senha) VALUES (DEFAULT,'$user','$email','$senhaHash');";
-
-
-                    $result = mysqli_query($conn,$query);
-
-                    $id_user = mysqli_insert_id($conn);
-                    
-                    if($result) {
-                        if(!is_dir('user'.$id_user)){
-                            $diretorio_user = 'users';
-                            $novo_diretorio = $diretorio_user . DIRECTORY_SEPARATOR . 'user'.$id_user;
-                            if($novo_diretorio){
-                                mkdir($novo_diretorio);
-                                if(is_dir($novo_diretorio)){
-                                    header("Location: login/"); exit;
-                                }
+            if (strcmp($senha, $confirmeSenha) == 0) {
+                $query_consult = "SELECT * FROM usuario WHERE email = ?";
+                $stmt = $conn->prepare($query_consult);
+                $stmt->bind_param('s', $email);
+                $stmt->execute();
+                $result_consult = $stmt->get_result();
+    
+                $email_disponivel = $result_consult->num_rows == 0;
+    
+                if ($email_disponivel) {
+                    $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
+                    $query = "INSERT INTO usuario (nome, email, senha) VALUES (?, ?, ?)";
+                    $stmt = $conn->prepare($query);
+                    $stmt->bind_param('sss', $user, $email, $senhaHash);
+    
+                    if ($stmt->execute()) {
+                        $id_user = $conn->insert_id;
+    
+                        $novo_diretorio = 'users' . DIRECTORY_SEPARATOR . 'user' . $id_user;
+                        if (!is_dir($novo_diretorio)) {
+                            mkdir($novo_diretorio, 0777, true);
+                            if (is_dir($novo_diretorio)) {
+                                header("Location: login/");
+                                exit;
                             }
-                        }else{
-                            echo "Este diretorio já existe";
+                        } else {
+                            echo "Este diretório já existe";
                         }
                     } else {
                         header("Location: login/?error=3");
                         exit;
                     }
-                }else{
+                } else {
                     header("Location: login/?error=5");
                     exit;
                 }
-   
             } else {
                 header("Location: login/?error=4");
                 exit;
             }
-    
         } else {
             header("Location: login/?error=2");
             exit;
         }
     }
+    
 
     function uploadFotoPerfil() {
         if (isset($_FILES['foto-perfil'])) {
@@ -275,42 +261,35 @@
         }
     }
     
-
-
-    function salvarPublicacao(){
-        if(isset($_SESSION['login']) && $_SESSION['login']==true) {
-            if(isset($_POST['id_salve_publi']) && 
-            !empty($_POST['id_salve_publi'])) {
+    function salvarPublicacao() {
+        if (isset($_SESSION['login']) && $_SESSION['login'] == true) {
+            if (isset($_POST['id_salve_publi']) && !empty($_POST['id_salve_publi'])) {
                 $id_publi = $_POST['id_salve_publi'];
                 $id_user = $_SESSION['usuario_id'];
-
+    
                 global $conn;
-
-                //echo $id_publi ." + " . $id_user; 
-                
-                $query = "INSERT INTO publicacoes_salvas (id_user_s, id_publi_s) VALUES ($id_user, $id_publi);";
-
-                $result = mysqli_query($conn,$query);
-
-                if($result){
+    
+                $query = "INSERT INTO publicacoes_salvas (id_user_s, id_publi_s) VALUES (?, ?)";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param('ii', $id_user, $id_publi);
+    
+                if ($stmt->execute()) {
                     header('Location: home/');
                     exit;
-                }else{
+                } else {
                     header('Location: home/?erro=3');
                     exit;
                 }
-
-            }else{
+            } else {
                 header('Location: home/?erro=3');
                 exit;
             }
-        }else{
+        } else {
             header('Location: login/');
             exit;
         }
     }
-
-
+    
         function removePublicacao(){
             if(isset($_SESSION['login']) && $_SESSION['login']==true) {
                 if(isset($_POST['id_salve_publi']) && 
@@ -323,10 +302,10 @@
                     echo $id_publi ." + " . $id_user; 
                     
                     $query = "DELETE FROM publicacoes_salvas WHERE id_user_s='$id_user' AND id_publi_s='$id_publi';";
+                    $stmt = $conn->prepare($query);
+                    $stmt->bind_param('ii', $id_user, $id_publi);
 
-                    $result = mysqli_query($conn,$query);
-
-                    if($result){
+                    if($stmt->execute()){
                         header('Location: account/');
                         exit;
                     }else{
@@ -357,17 +336,18 @@
     
                 global $conn;
                 
-                $query = "INSERT INTO comentarios (id_usuario_com, id_publi_com, texto, data_comentario) VALUES ($id_user, $id_publi,'$comentario',NOW());";
+                $query = "INSERT INTO comentarios (id_usuario_com, id_publi_com, texto, data_comentario) VALUES (?, ?,?,NOW());";
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param('iis',$id_user, $id_publi, $comentario);
     
-                $result = mysqli_query($conn, $query);
-    
-                if ($result) {
+                if ($stmt->execute()) {
                     $query_num_com = "SELECT * FROM comentarios WHERE id_publi_com=$id_publi;";
                     $result_num_com = mysqli_query($conn,$query_num_com);
     
                     $num_com = mysqli_num_rows($result_num_com);
-                    echo json_encode(['success' => true,'num_com'=>$num_com]);
+                    echo json_encode(['success' => true,'num_com'=>$num_com, 'dados' =>' $dados']);
                     
+
                 } else {
                     echo json_encode(['success' => false, 'error' => 'Erro ao inserir comentário no banco de dados.']);
                 }
@@ -387,11 +367,11 @@
 
             global $conn;
 
-            $query = "DELETE FROM comentarios WHERE id_comentario='$id_comentario'";
+            $query = "DELETE FROM comentarios WHERE id_comentario=?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('i',$id_comentario);
 
-            $result = mysqli_query($conn,$query);
-
-            if($result){
+            if($stmt->execute()){
                 //header('Location: publicacao/?id='.$_POST['redirecionamento']);
                 echo json_encode(['sucess' => true]);
 
@@ -436,11 +416,6 @@
             }else{
                 echo "login";
             }
-
-            
-                
-
-
         }
     }
 
